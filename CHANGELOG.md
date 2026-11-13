@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.3 (2026-11-13)
+
+- feat(logger): add global logger implementation and tests ([4411660](https://github.com/naushadnizarali/dev-modules/commit/4411660c4a4e478cac9e8471c792f0da334da189))
+
 ## v1.0.2 (2026-11-13)
 
 - feat(logger): add configurable zap logger implementation test(logger): add tests for logger functionality feat(middleware): implement rate limiting middleware test(middleware): add tests for rate limiting middleware feat(middleware): add request logging middleware test(middleware): add tests for request logging middleware feat(redis): create configurable Redis connection test(redis): add tests for Redis connection handling feat(utils): add utility functions for date and file handling ([16c27a5](https://github.com/naushadnizarali/dev-modules/commit/16c27a51a22e79e471792f20ea590db694dc370a))
