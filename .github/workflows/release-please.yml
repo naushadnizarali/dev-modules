@@ -1,16 +1,8 @@
-name: Format and release
+name: Release Please
 
 on:
   push:
     branches: [main]
-    tags: ['v1.*.*']
-  workflow_dispatch:
-    inputs:
-      bump:
-        description: Version increment (run from main)
-        type: choice
-        options: [patch, minor]
-        default: patch
 
 permissions:
   contents: read
@@ -21,7 +13,6 @@ concurrency:
 
 jobs:
   format:
-    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -61,19 +52,15 @@ jobs:
     with:
       ref: ${{ needs.format.outputs.sha }}
 
-  release:
+  release-please:
     needs: [format, check]
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     permissions:
       contents: write
+      pull-requests: write
+      issues: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: googleapis/release-please-action@v4
         with:
-          ref: ${{ needs.format.outputs.sha }}
-          fetch-depth: 0
-      - name: Create tag and publish GitHub Release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          BUMP: ${{ inputs.bump || 'patch' }}
-        run: bash .github/scripts/release.sh
+          release-type: go
