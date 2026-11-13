@@ -1,8 +1,15 @@
-name: Release Please
+name: Format and publish Go module
 
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Version increment (run from main)
+        type: choice
+        options: [patch, minor]
+        default: patch
 
 permissions:
   contents: read
@@ -13,6 +20,7 @@ concurrency:
 
 jobs:
   format:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -52,15 +60,22 @@ jobs:
     with:
       ref: ${{ needs.format.outputs.sha }}
 
-  release-please:
+  release:
     needs: [format, check]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       contents: write
-      pull-requests: write
-      issues: write
     steps:
-      - uses: googleapis/release-please-action@v4
+      - uses: actions/checkout@v6
         with:
-          release-type: go
+          ref: ${{ needs.format.outputs.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - name: Tag and publish Go module
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUMP: ${{ inputs.bump || 'patch' }}
+        run: bash .github/scripts/release.sh
