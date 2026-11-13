@@ -110,6 +110,85 @@ log := modulelogger.MustNew(modulelogger.Config{
 })
 ```
 
+### Global `logger.Log`
+
+For applications that prefer `logger.Log.Info(...)` in every file, initialize
+the package-wide logger once in `main`. These methods use `fmt.Printf`-style
+format strings:
+
+```go
+func main() {
+    cfg := modulelogger.DefaultConfig()
+    cfg.Level = "info"
+    cfg.Console = true
+    cfg.File = true
+    cfg.FilePath = filepath.Join(
+        "logs/app",
+        time.Now().Format("app-2006-01-02.log"),
+    )
+
+    if err := modulelogger.Init(cfg); err != nil {
+        panic(err)
+    }
+    defer func() { _ = modulelogger.Sync() }()
+
+    modulelogger.Log.Info("server started on port %d", 8080)
+    run()
+}
+```
+
+Then use the same imported package from any application file:
+
+```go
+import log "github.com/naushadnizarali/dev-modules/logger"
+
+func createOrder(orderID string) {
+    log.Debug("creating order %s", orderID)
+    log.Info("created order %s", orderID)
+}
+```
+
+The package-level `Debug`, `Info`, `Warn`, `Error`, and `Fatal` functions forward
+to `logger.Log`. Use `logger.Log.Info(...)` instead when an interface value is
+preferred for dependency injection or testing.
+
+`logger.Init` creates a configured logger and installs it for both
+`logger.Log` and Zap's `zap.L()`. Do not defer `Sync` inside an initialization
+function: that defer would run as soon as initialization returns. Defer
+`logger.Sync()` from `main`, so logs remain active for the application lifetime.
+
+`FilePath` must be a complete file path. To create one file per application
+start date, format the filename as shown above. The logger creates missing parent
+directories automatically.
+
+### `logger.SetGlobal`
+
+Installs an existing `*zap.Logger` for both APIs. Use this when custom Zap
+options are added outside this module:
+
+```go
+log, err := modulelogger.New(cfg)
+if err != nil {
+    return err
+}
+log = log.WithOptions(zap.AddCallerSkip(1))
+if err := modulelogger.SetGlobal(log); err != nil {
+    return err
+}
+```
+
+### `logger.Sync`
+
+Flushes the package-wide logger. Call it during shutdown:
+
+```go
+defer func() { _ = modulelogger.Sync() }()
+```
+
+`logger.Log.Sync()` performs the same operation. `logger.Log` safely discards
+entries before initialization, so package startup code does not panic. `Fatal`
+logs the message and terminates the process, following Zap's fatal behavior.
+
 ## GORM database connection
 
 The `db` package supports PostgreSQL, MySQL/MariaDB, SQLite, and SQL Server. It
