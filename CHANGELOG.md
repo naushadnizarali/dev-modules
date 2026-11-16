@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.4 (2026-11-16)
+
+- feat(main): implement main application entry point feat(logger): enhance logging functions with caller info chore: update .gitignore to exclude logs and database file chore: add godotenv dependency for environment variable management docs: update README with environment variable instructions ([1f594bc](https://github.com/naushadnizarali/dev-modules/commit/1f594bc8ba5ddc9d0459f4d1288d955f457d310b))
+
 ## v1.0.3 (2026-11-13)
 
 - feat(logger): add global logger implementation and tests ([4411660](https://github.com/naushadnizarali/dev-modules/commit/4411660c4a4e478cac9e8471c792f0da334da189))
