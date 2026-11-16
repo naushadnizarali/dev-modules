@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.5 (2026-11-16)
+
+- feat(database): implement GORM database connection management ([09c6f45](https://github.com/naushadnizarali/dev-modules/commit/09c6f451591cb12a0d92b96aafbf5e62269a6340))
+
 ## v1.0.4 (2026-11-16)
 
 - feat(main): implement main application entry point feat(logger): enhance logging functions with caller info chore: update .gitignore to exclude logs and database file chore: add godotenv dependency for environment variable management docs: update README with environment variable instructions ([1f594bc](https://github.com/naushadnizarali/dev-modules/commit/1f594bc8ba5ddc9d0459f4d1288d955f457d310b))
