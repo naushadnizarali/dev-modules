@@ -1,5 +1,5 @@
 // Package db opens configured GORM database connections.
-package db
+package database
 
 import (
 	"context"

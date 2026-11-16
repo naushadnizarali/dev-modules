@@ -1,4 +1,4 @@
-package db_test
+package database_test
 
 import (
 	"bytes"
@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/naushadnizarali/dev-modules/db"
+	db "github.com/naushadnizarali/dev-modules/database"
 	modulelogger "github.com/naushadnizarali/dev-modules/logger"
 )
 

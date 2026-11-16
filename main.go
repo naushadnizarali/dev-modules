@@ -14,7 +14,7 @@ import (
 	"github.com/joho/godotenv"
 
 	"github.com/naushadnizarali/dev-modules/auth"
-	"github.com/naushadnizarali/dev-modules/db"
+	db "github.com/naushadnizarali/dev-modules/database"
 	"github.com/naushadnizarali/dev-modules/logger"
 	"github.com/naushadnizarali/dev-modules/middleware"
 	moduleredis "github.com/naushadnizarali/dev-modules/redis"
