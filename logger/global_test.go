@@ -2,11 +2,13 @@ package logger_test
 
 import (
 	"bytes"
+	"runtime"
 	"strings"
 	"testing"
 
 	modulelogger "github.com/naushadnizarali/dev-modules/logger"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zaptest/observer"
 )
 
 func TestGlobalLogger(t *testing.T) {
@@ -42,5 +44,32 @@ func TestGlobalLogger(t *testing.T) {
 func TestSetGlobalRejectsNil(t *testing.T) {
 	if err := modulelogger.SetGlobal(nil); err == nil {
 		t.Fatal("expected nil logger error")
+	}
+}
+
+func TestGlobalLoggerCaller(t *testing.T) {
+	t.Cleanup(func() { _ = modulelogger.SetGlobal(zap.NewNop()) })
+	core, entries := observer.New(zap.DebugLevel)
+	if err := modulelogger.SetGlobal(zap.New(core, zap.AddCaller())); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, call := range []func(string, ...any){
+		modulelogger.Debug, modulelogger.Info, modulelogger.Warn, modulelogger.Error,
+		modulelogger.Log.Debug, modulelogger.Log.Info, modulelogger.Log.Warn, modulelogger.Log.Error,
+	} {
+		_, file, line, _ := runtime.Caller(0)
+		call("caller test")
+		entry := entries.All()[entries.Len()-1]
+		if entry.Caller.File != file || entry.Caller.Line != line+1 {
+			t.Errorf("caller = %s, want %s:%d", entry.Caller, file, line+1)
+		}
+	}
+
+	_, file, line, _ := runtime.Caller(0)
+	zap.L().Info("direct Zap caller")
+	entry := entries.All()[entries.Len()-1]
+	if entry.Caller.File != file || entry.Caller.Line != line+1 {
+		t.Errorf("Zap caller = %s, want %s:%d", entry.Caller, file, line+1)
 	}
 }

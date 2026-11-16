@@ -62,31 +62,51 @@ func Sync() error {
 
 // Debug writes a formatted debug entry to Log.
 func Debug(format string, args ...any) {
+	if Log == globalLog {
+		globalLog.current().Debugf(format, args...)
+		return
+	}
 	Log.Debug(format, args...)
 }
 
 // Info writes a formatted informational entry to Log.
 func Info(format string, args ...any) {
+	if Log == globalLog {
+		globalLog.current().Infof(format, args...)
+		return
+	}
 	Log.Info(format, args...)
 }
 
 // Warn writes a formatted warning entry to Log.
 func Warn(format string, args ...any) {
+	if Log == globalLog {
+		globalLog.current().Warnf(format, args...)
+		return
+	}
 	Log.Warn(format, args...)
 }
 
 // Error writes a formatted error entry to Log.
 func Error(format string, args ...any) {
+	if Log == globalLog {
+		globalLog.current().Errorf(format, args...)
+		return
+	}
 	Log.Error(format, args...)
 }
 
 // Fatal writes a formatted fatal entry and terminates the process.
 func Fatal(format string, args ...any) {
+	if Log == globalLog {
+		globalLog.current().Fatalf(format, args...)
+		return
+	}
 	Log.Fatal(format, args...)
 }
 
 func (l *globalLogger) current() *zap.SugaredLogger {
-	return l.logger.Load().Sugar()
+	return l.logger.Load().WithOptions(zap.AddCallerSkip(1)).Sugar()
 }
 
 func (l *globalLogger) Debug(format string, args ...any) {

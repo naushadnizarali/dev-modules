@@ -892,6 +892,26 @@ if optionalID != nil {
 
 ## Complete HTTP setup
 
+The root [`main.go`](main.go) runs all six packages together. Start it with a
+reachable PostgreSQL database, local Redis, and a JWT secret of at least 32 bytes:
+
+```sh
+export DATABASE_DSN='host=localhost user=app password=secret dbname=app port=5432 sslmode=disable'
+export JWT_SECRET='replace-with-your-own-secret-at-least-32-bytes'
+go run .
+```
+
+Optional environment variables are `DATABASE_DRIVER` (default `postgres`),
+`REDIS_URL` (for example `redis://127.0.0.1:6380/0`; bare `host:port` is also accepted),
+`REDIS_ADDR` (default `localhost:6379`, used when `REDIS_URL` is unset),
+`HTTP_ADDR` (default `:8080`; accepts a bare port such as `4441` or `host:port`),
+`LOG_LEVEL` (default `info`), and `LOG_FILE` (enables file logging when set).
+`GET /health` returns 204 without authentication. `GET /me` requires a Bearer JWT
+signed with the configured secret, issuer `dev-modules`, and audience
+`dev-modules-api`; it returns the token subject and permits 100 requests per
+minute per subject. SIGINT and SIGTERM trigger graceful HTTP shutdown and close
+the database and Redis connections.
+
 This example combines logging, PostgreSQL, Redis, JWT authentication, rate
 limiting, request logging, and graceful resource cleanup:
 
