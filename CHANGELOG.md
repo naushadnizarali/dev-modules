@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.0.6 (2026-11-17)
+
+- feat(app): implement shared services initialization ([a85f956](https://github.com/naushadnizarali/dev-modules/commit/a85f9566b3f64628ee9dcdad2b63c13d7bccd9ba))
+- Merge branch 'main' of https://github.com/naushadnizarali/dev-modules ([b798e3c](https://github.com/naushadnizarali/dev-modules/commit/b798e3c262eaf6831e34d8009e0bbe11c0ac0366))
+
 ## v1.0.5 (2026-11-16)
 
 - feat(database): implement GORM database connection management ([09c6f45](https://github.com/naushadnizarali/dev-modules/commit/09c6f451591cb12a0d92b96aafbf5e62269a6340))
