@@ -81,6 +81,7 @@ func parseConfig() (Config, error) {
 	cfg.Database.DSN = utils.GetEnv("DATABASE_DSN", "")
 	cfg.Database.Schema = utils.GetEnv("DATABASE_SCHEMA", "")
 	cfg.Database.DoSeed = utils.GetBool("DATABASE_SEED", false)
+	cfg.Database.LogLevel = utils.GetEnv("DATABASE_LOG_LEVEL", "warn")
 
 	cfg.Redis = moduleredis.DefaultConfig()
 	cfg.Redis.ClientName = strings.ToLower(utils.GetEnv("REDIS_CLIENT_NAME", "dev-modules"))
