@@ -25,7 +25,7 @@ import (
 type Config struct {
 	Env         string
 	HTTPAddr    string
-	CorsOrigin  string
+	CorsOrigin  []string
 	AppTimezone string
 	AppName     string
 	ViteApiURL  string
@@ -57,7 +57,7 @@ func parseConfig() (Config, error) {
 		Production:  utils.GetBool("PRODUCTION", false),
 		GinMode:     utils.GetEnv("GIN_MODE", "debug"),
 		HTTPAddr:    utils.GetEnv("HTTP_ADDR", ":8080"),
-		CorsOrigin:  utils.GetEnv("CORS_ORIGIN", "*"),
+		CorsOrigin:  utils.SplitCSV(utils.GetEnv("CORS_ORIGIN", "*")),
 		AppTimezone: utils.GetEnv("APP_TIMEZONE", "UTC"),
 		AppName:     utils.GetEnv("APP_NAME", "dev-modules"),
 		ViteApiURL:  utils.GetEnv("VITE_API_URL", "http://localhost:8080"),
