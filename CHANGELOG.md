@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.9 (2026-11-17)
+
+- feat(config): add log level configuration for database ([e535115](https://github.com/naushadnizarali/dev-modules/commit/e535115e5a55a49b33af7a6784001c0ed754bca7))
+
 ## v1.0.8 (2026-11-17)
 
 - feat(config): change CorsOrigin to support multiple origins ([0e25a6a](https://github.com/naushadnizarali/dev-modules/commit/0e25a6a2cb8b739dba5c8a0572843f19398b18ed))
