@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.0.8 (2026-11-17)
+
+- feat(config): change CorsOrigin to support multiple origins ([0e25a6a](https://github.com/naushadnizarali/dev-modules/commit/0e25a6a2cb8b739dba5c8a0572843f19398b18ed))
+- Merge branch 'main' of https://github.com/naushadnizarali/dev-modules ([a9c4927](https://github.com/naushadnizarali/dev-modules/commit/a9c4927f70cb3f169e7d804028abab4fec585c9e))
+
 ## v1.0.7 (2026-11-17)
 
 - feat(config): enhance configuration structure and parsing ([eb5decc](https://github.com/naushadnizarali/dev-modules/commit/eb5decc25d7e9cb45abc43ffb67c6f5b1779d5bb))
