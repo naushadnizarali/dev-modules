@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func GetEnv(key, fallback string) string {
@@ -22,6 +23,14 @@ func GetInt(key string, fallback int) int {
 	return v
 }
 
+func GetInt64(key string, fallback int64) int64 {
+	v, err := strconv.ParseInt(strings.TrimSpace(os.Getenv(key)), 10, 64)
+	if err != nil {
+		return fallback
+	}
+	return v
+}
+
 func GetBool(key string, fallback bool) bool {
 	v := strings.TrimSpace(os.Getenv(key))
 	if v == "" {
@@ -32,6 +41,14 @@ func GetBool(key string, fallback bool) bool {
 		return fallback
 	}
 	return b
+}
+
+func GetDuration(key string, fallback time.Duration) time.Duration {
+	v, err := strconv.ParseInt(strings.TrimSpace(os.Getenv(key)), 10, 64)
+	if err != nil {
+		return time.Duration(fallback)
+	}
+	return time.Duration(v)
 }
 
 func SplitCSV(s string) []string {

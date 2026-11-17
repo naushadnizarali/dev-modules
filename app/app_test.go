@@ -21,6 +21,7 @@ func TestAppInitAndClose(t *testing.T) {
 	t.Setenv("LOG_FILE", "")
 	t.Setenv("LOG_LEVEL", "error")
 	t.Setenv("APP_ENV", "production")
+	t.Setenv("PRODUCTION", "true")
 	t.Setenv("JWT_SECRET", "") // Shared services do not require JWT setup.
 	t.Cleanup(func() { _ = logger.SetGlobal(zap.NewNop()) })
 	services, err := app.AppInit(context.Background())
@@ -28,7 +29,7 @@ func TestAppInitAndClose(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = services.Close() })
-	if services.Config.HTTPAddr != ":4441" || services.Config.Database.Env != "production" {
+	if services.Config.HTTPAddr != ":4441" || services.Config.Database.Production != true {
 		t.Fatalf("unexpected configuration")
 	}
 	if services.Logger != zap.L() {
@@ -61,7 +62,8 @@ func TestAppInitAndClose(t *testing.T) {
 	}
 }
 
-func TestAppInitFailurePreservesGlobalLogger(t *testing.T) {
+func TestAppInitFailureInitializesGlobalLogger(t *testing.T) {
+	t.Cleanup(func() { _ = logger.SetGlobal(zap.NewNop()) })
 	t.Chdir(t.TempDir())
 	t.Setenv("DATABASE_DRIVER", "sqlite")
 	t.Setenv("DATABASE_DSN", ":memory:")
@@ -76,8 +78,8 @@ func TestAppInitFailurePreservesGlobalLogger(t *testing.T) {
 	if err == nil || services != nil || !strings.Contains(err.Error(), "open Redis") {
 		t.Fatalf("AppInit = %v, %v", services, err)
 	}
-	if zap.L() != original {
-		t.Fatal("failed initialization changed global logger")
+	if zap.L() == original {
+		t.Fatal("global logger was not initialized before opening connections")
 	}
 }
 

@@ -23,11 +23,22 @@ import (
 // Config contains the environment configuration used during initialization.
 // It contains credentials and should not be logged or exposed in HTTP responses.
 type Config struct {
-	Env      string
-	HTTPAddr string
-	Logger   logger.Config
-	Database database.Config
-	Redis    moduleredis.Config
+	Env         string
+	HTTPAddr    string
+	CorsOrigin  string
+	AppTimezone string
+	AppName     string
+	ViteApiURL  string
+	ViteEnv     string
+	Production  bool
+	GinMode     string
+	JWTSecret   string
+	JWTIssuer   string
+	JWTAudience []string
+	JWTTTL      time.Duration
+	Logger      logger.Config
+	Database    database.Config
+	Redis       moduleredis.Config
 }
 
 // App owns the initialized services. Call Close during application shutdown.
@@ -38,6 +49,54 @@ type App struct {
 	Logger    *zap.Logger
 	closeOnce sync.Once
 	closeErr  error
+}
+
+func parseConfig() (Config, error) {
+	cfg := Config{
+		Env:         utils.GetEnv("APP_ENV", "development"),
+		Production:  utils.GetBool("PRODUCTION", false),
+		GinMode:     utils.GetEnv("GIN_MODE", "debug"),
+		HTTPAddr:    utils.GetEnv("HTTP_ADDR", ":8080"),
+		CorsOrigin:  utils.GetEnv("CORS_ORIGIN", "*"),
+		AppTimezone: utils.GetEnv("APP_TIMEZONE", "UTC"),
+		AppName:     utils.GetEnv("APP_NAME", "dev-modules"),
+		ViteApiURL:  utils.GetEnv("VITE_API_URL", "http://localhost:8080"),
+		ViteEnv:     utils.GetEnv("VITE_ENV", "development"),
+		JWTSecret:   utils.GetEnv("JWT_SECRET", "dev-modules-secret"),
+		JWTIssuer:   utils.GetEnv("JWT_ISSUER", "dev-modules"),
+		JWTAudience: utils.SplitCSV(utils.GetEnv("JWT_AUDIENCE", "dev-modules-api")),
+		JWTTTL:      utils.GetDuration("JWT_TTL", 15*time.Minute),
+	}
+	if !strings.Contains(cfg.HTTPAddr, ":") {
+		cfg.HTTPAddr = ":" + cfg.HTTPAddr
+	}
+	cfg.Logger = logger.DefaultConfig()
+	cfg.Logger.Level = utils.GetEnv("LOG_LEVEL", "info")
+	cfg.Logger.FilePath = utils.GetEnv("LOG_FILE", "")
+	cfg.Logger.File = cfg.Logger.FilePath != ""
+
+	cfg.Database = database.DefaultConfig()
+	cfg.Database.Production = cfg.Production
+	cfg.Database.Driver = utils.GetEnv("DATABASE_DRIVER", database.DriverSQLite)
+	cfg.Database.DSN = utils.GetEnv("DATABASE_DSN", "")
+	cfg.Database.Schema = utils.GetEnv("DATABASE_SCHEMA", "")
+	cfg.Database.DoSeed = utils.GetBool("DATABASE_SEED", false)
+
+	cfg.Redis = moduleredis.DefaultConfig()
+	cfg.Redis.ClientName = strings.ToLower(utils.GetEnv("REDIS_CLIENT_NAME", "dev-modules"))
+	cfg.Redis.Addr = utils.GetEnv("REDIS_ADDR", cfg.Redis.Addr)
+	cfg.Redis.Username = utils.GetEnv("REDIS_USERNAME", "")
+	cfg.Redis.Password = utils.GetEnv("REDIS_PASSWORD", "")
+	cfg.Redis.DB = utils.GetInt("REDIS_DB", 0)
+	cfg.Redis.RateLimitEnabled = utils.GetBool("REDIS_RATE_LIMIT_ENABLED", false)
+	cfg.Redis.RateLimitCount = utils.GetInt64("REDIS_RATE_LIMIT_COUNT", 100)
+	endpoint := utils.GetEnv("REDIS_URL", "")
+	if endpoint != "" && !strings.Contains(endpoint, "://") {
+		cfg.Redis.Addr = endpoint
+	} else {
+		cfg.Redis.URL = endpoint
+	}
+	return cfg, nil
 }
 
 // AppInit loads an optional .env file from the working directory (existing
@@ -51,36 +110,16 @@ func AppInit(ctx context.Context) (*App, error) {
 	if err := godotenv.Load(); err != nil && !errors.Is(err, os.ErrNotExist) {
 		return nil, fmt.Errorf("app: load .env: %w", err)
 	}
-	cfg := Config{Env: utils.GetEnv("APP_ENV", "development"), HTTPAddr: utils.GetEnv("HTTP_ADDR", ":8080")}
-	if !strings.Contains(cfg.HTTPAddr, ":") {
-		cfg.HTTPAddr = ":" + cfg.HTTPAddr
-	}
-	cfg.Logger = logger.DefaultConfig()
-	cfg.Logger.Level = utils.GetEnv("LOG_LEVEL", "info")
-	cfg.Logger.FilePath = utils.GetEnv("LOG_FILE", "")
-	cfg.Logger.File = cfg.Logger.FilePath != ""
-
-	cfg.Database = database.DefaultConfig()
-	cfg.Database.Env = cfg.Env
-	cfg.Database.Driver = utils.GetEnv("DATABASE_DRIVER", database.DriverPostgres)
-	cfg.Database.DSN = utils.GetEnv("DATABASE_DSN", "")
-
-	cfg.Redis = moduleredis.DefaultConfig()
-	cfg.Redis.Addr = utils.GetEnv("REDIS_ADDR", cfg.Redis.Addr)
-	cfg.Redis.Username = utils.GetEnv("REDIS_USERNAME", "")
-	cfg.Redis.Password = os.Getenv("REDIS_PASSWORD")
-	cfg.Redis.DB = utils.GetInt("REDIS_DB", 0)
-	endpoint := utils.GetEnv("REDIS_URL", "")
-	if endpoint != "" && !strings.Contains(endpoint, "://") {
-		cfg.Redis.Addr = endpoint
-	} else {
-		cfg.Redis.URL = endpoint
+	cfg, err := parseConfig()
+	if err != nil {
+		return nil, fmt.Errorf("app: parse config: %w", err)
 	}
 
-	log, err := logger.New(cfg.Logger)
+	err = logger.Init(cfg.Logger)
 	if err != nil {
 		return nil, fmt.Errorf("app: create logger: %w", err)
 	}
+	log := zap.L()
 	cfg.Database.Logger = log
 	result := &App{Config: cfg, Logger: log}
 	startupCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
@@ -94,10 +133,6 @@ func AppInit(ctx context.Context) (*App, error) {
 	if err != nil {
 		_ = result.Close()
 		return nil, fmt.Errorf("app: open Redis: %w", err)
-	}
-	if err := logger.SetGlobal(log); err != nil {
-		_ = result.Close()
-		return nil, err
 	}
 	return result, nil
 }

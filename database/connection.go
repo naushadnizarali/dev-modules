@@ -28,8 +28,10 @@ const (
 // Config controls the database driver, DSN, GORM behavior, and connection
 // pool. Pool values are applied only when greater than zero.
 type Config struct {
-	Env             string // "production", "staging", "development", etc.
+	Production      bool
 	Driver          string
+	Schema          string
+	DoSeed          bool
 	DSN             string
 	MaxIdleConns    int
 	MaxOpenConns    int
@@ -93,7 +95,7 @@ func Open(ctx context.Context, cfg Config) (*gorm.DB, error) {
 		return nil, fmt.Errorf("db: open %s connection: %w", normalizeDriver(cfg.Driver), err)
 	}
 
-	if cfg.Env != "production" {
+	if !cfg.Production {
 		database = database.Debug()
 		zap.L().Info("🔍 DB Debug mode enabled (non-production)")
 	}

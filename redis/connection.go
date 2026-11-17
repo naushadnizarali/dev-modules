@@ -22,6 +22,8 @@ type Config struct {
 	DB                    int
 	ClientName            string
 	Protocol              int
+	RateLimitEnabled      bool
+	RateLimitCount        int64
 	DialTimeout           time.Duration
 	ReadTimeout           time.Duration
 	WriteTimeout          time.Duration

@@ -33,10 +33,10 @@ func run() error {
 	defer func() { _ = services.Close() }()
 
 	jwtManager, err := auth.New(auth.Config{
-		Secret:   []byte(os.Getenv("JWT_SECRET")),
-		Issuer:   "dev-modules",
-		Audience: []string{"dev-modules-api"},
-		TTL:      15 * time.Minute,
+		Secret:   []byte(services.Config.JWTSecret),
+		Issuer:   services.Config.JWTIssuer,
+		Audience: services.Config.JWTAudience,
+		TTL:      services.Config.JWTTTL,
 	})
 	if err != nil {
 		logger.Error("configure JWT: %v", err)
@@ -54,9 +54,9 @@ func run() error {
 	}
 	rateLimit, err := middleware.RateLimit(middleware.RateLimitConfig{
 		Redis:  services.Redis,
-		Limit:  100,
+		Limit:  services.Config.Redis.RateLimitCount,
 		Window: time.Minute,
-		Prefix: "dev-modules",
+		Prefix: services.Config.Redis.ClientName,
 		Skip:   skipHealth,
 		Key: func(r *http.Request) string {
 			subject, _ := auth.StringClaim(r.Context(), "sub")
