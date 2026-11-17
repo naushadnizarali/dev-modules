@@ -15,6 +15,48 @@ Redis, JWT authentication, HTTP middleware, and common utility functions.
 | [`utils`](#utility-functions) | Environment, password, ID, date, file, and pointer helpers. |
 | [Complete setup](#complete-http-setup) | A combined `net/http` application example. |
 
+## Initialize shared services
+
+Import the `app` package and call `AppInit` once during application startup:
+
+```go
+import (
+    "context"
+    "log"
+
+    "github.com/naushadnizarali/dev-modules/app"
+)
+
+func main() {
+    services, err := app.AppInit(context.Background())
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer func() { _ = services.Close() }()
+
+    // services.Config: environment configuration
+    // services.Redis: *redis.Client
+    // services.DB: *gorm.DB
+    // services.Logger: *zap.Logger
+    services.Logger.Info("application initialized")
+}
+```
+
+`AppInit` loads an optional `.env` from the working directory without overriding
+existing environment variables. It uses `DATABASE_DRIVER` (default `postgres`),
+`DATABASE_DSN` (required), `REDIS_URL` or `REDIS_ADDR` (default `localhost:6379`),
+`REDIS_USERNAME`, `REDIS_PASSWORD`, `REDIS_DB` (default `0`), `LOG_LEVEL`,
+`LOG_FILE`, `HTTP_ADDR`, and `APP_ENV` (default `development`; use `production`
+to disable database debug mode). A Redis URL takes precedence over individual
+connection settings. Configuration contains credentials; do not expose it in
+responses or logs.
+
+The function verifies both connections with a 15-second startup timeout, installs
+the global logger, and cleans up opened connections if initialization fails.
+`Close` closes both connections and flushes logs; stop your handlers and workers
+before calling it. No HTTP server or JWT configuration is required by `AppInit`.
+The root `main.go` uses this initializer and adds the example HTTP/JWT setup.
+
 ## Requirements and installation
 
 - Go version: see the `go` directive in [`go.mod`](go.mod).

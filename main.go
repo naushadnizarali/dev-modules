@@ -7,27 +7,16 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
-	"github.com/joho/godotenv"
-
+	"github.com/naushadnizarali/dev-modules/app"
 	"github.com/naushadnizarali/dev-modules/auth"
-	db "github.com/naushadnizarali/dev-modules/database"
 	"github.com/naushadnizarali/dev-modules/logger"
 	"github.com/naushadnizarali/dev-modules/middleware"
-	moduleredis "github.com/naushadnizarali/dev-modules/redis"
-	"github.com/naushadnizarali/dev-modules/utils"
-	"go.uber.org/zap"
 )
 
 func main() {
-	if err := godotenv.Load(); err != nil {
-		fmt.Println("⚠️ Could not load .env file")
-		panic(err)
-	}
-
 	if err := run(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -35,17 +24,13 @@ func main() {
 }
 
 func run() error {
-	logConfig := logger.DefaultConfig()
-	logConfig.Level = utils.GetEnv("LOG_LEVEL", "info")
-	logConfig.FilePath = utils.GetEnv("LOG_FILE", "")
-	logConfig.File = logConfig.FilePath != ""
-	if err := logger.Init(logConfig); err != nil {
-		return err
-	}
-	defer func() { _ = logger.Sync() }()
-
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+	services, err := app.AppInit(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = services.Close() }()
 
 	jwtManager, err := auth.New(auth.Config{
 		Secret:   []byte(os.Getenv("JWT_SECRET")),
@@ -58,35 +43,6 @@ func run() error {
 		return fmt.Errorf("configure JWT: %w", err)
 	}
 
-	startupCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
-	defer cancel()
-	databaseConfig := db.DefaultConfig()
-	databaseConfig.Driver = utils.GetEnv("DATABASE_DRIVER", db.DriverPostgres)
-	databaseConfig.DSN = utils.GetEnv("DATABASE_DSN", "")
-	databaseConfig.Logger = zap.L()
-	database, err := db.Open(startupCtx, databaseConfig)
-	if err != nil {
-		logger.Error("open database: %v", err)
-		return fmt.Errorf("open database: %w", err)
-	}
-	defer func() { _ = db.Close(database) }()
-
-	redisConfig := moduleredis.DefaultConfig()
-	redisConfig.Addr = utils.GetEnv("REDIS_ADDR", redisConfig.Addr)
-	redisEndpoint := utils.GetEnv("REDIS_URL", "")
-	if redisEndpoint != "" && !strings.Contains(redisEndpoint, "://") {
-		redisConfig.Addr = redisEndpoint
-	} else {
-		redisConfig.URL = redisEndpoint
-	}
-	redisClient, err := moduleredis.Open(startupCtx, redisConfig)
-	if err != nil {
-		logger.Error("open Redis: %v", err)
-		return fmt.Errorf("open Redis: %w", err)
-	}
-	defer func() { _ = redisClient.Close() }()
-	cancel()
-
 	skipHealth := func(r *http.Request) bool { return r.URL.Path == "/health" }
 	authenticate, err := middleware.Authenticate(middleware.AuthConfig{
 		Manager: jwtManager,
@@ -97,7 +53,7 @@ func run() error {
 		return err
 	}
 	rateLimit, err := middleware.RateLimit(middleware.RateLimitConfig{
-		Redis:  redisClient,
+		Redis:  services.Redis,
 		Limit:  100,
 		Window: time.Minute,
 		Prefix: "dev-modules",
@@ -123,13 +79,9 @@ func run() error {
 	})
 
 	handler := authenticate(rateLimit(mux))
-	handler = middleware.RequestLog(middleware.RequestLogConfig{Logger: zap.L()})(handler)
-	httpAddr := utils.GetEnv("HTTP_ADDR", ":8080")
-	if !strings.Contains(httpAddr, ":") {
-		httpAddr = ":" + httpAddr
-	}
+	handler = middleware.RequestLog(middleware.RequestLogConfig{Logger: services.Logger})(handler)
 	server := &http.Server{
-		Addr:              httpAddr,
+		Addr:              services.Config.HTTPAddr,
 		Handler:           handler,
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       15 * time.Second,
