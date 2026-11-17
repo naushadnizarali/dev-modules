@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.0.7 (2026-11-17)
+
+- feat(config): enhance configuration structure and parsing ([eb5decc](https://github.com/naushadnizarali/dev-modules/commit/eb5decc25d7e9cb45abc43ffb67c6f5b1779d5bb))
+- Merge branch 'main' of https://github.com/naushadnizarali/dev-modules ([3080c44](https://github.com/naushadnizarali/dev-modules/commit/3080c447f3b2241fdd27b2de6c045de2985e5897))
+
 ## v1.0.6 (2026-11-17)
 
 - feat(app): implement shared services initialization ([a85f956](https://github.com/naushadnizarali/dev-modules/commit/a85f9566b3f64628ee9dcdad2b63c13d7bccd9ba))
