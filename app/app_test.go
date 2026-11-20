@@ -24,7 +24,7 @@ func TestAppInitAndClose(t *testing.T) {
 	t.Setenv("PRODUCTION", "true")
 	t.Setenv("JWT_SECRET", "") // Shared services do not require JWT setup.
 	t.Cleanup(func() { _ = logger.SetGlobal(zap.NewNop()) })
-	services, err := app.AppInit(context.Background())
+	services, err := app.Init(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -74,7 +74,7 @@ func TestAppInitFailureInitializesGlobalLogger(t *testing.T) {
 	if err := logger.SetGlobal(original); err != nil {
 		t.Fatal(err)
 	}
-	services, err := app.AppInit(context.Background())
+	services, err := app.Init(context.Background())
 	if err == nil || services != nil || !strings.Contains(err.Error(), "open Redis") {
 		t.Fatalf("AppInit = %v, %v", services, err)
 	}
@@ -84,7 +84,7 @@ func TestAppInitFailureInitializesGlobalLogger(t *testing.T) {
 }
 
 func TestAppInitRejectsNilContext(t *testing.T) {
-	if _, err := app.AppInit(nil); err == nil {
+	if _, err := app.Init(nil); err == nil {
 		t.Fatal("expected error")
 	}
 }

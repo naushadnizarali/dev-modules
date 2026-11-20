@@ -100,11 +100,11 @@ func parseConfig() (Config, error) {
 	return cfg, nil
 }
 
-// AppInit loads an optional .env file from the working directory (existing
+// Init loads an optional .env file from the working directory (existing
 // environment variables take precedence), then opens and verifies both services.
 // It installs the logger for logger.Log and zap.L(). It does not start a server
 // or require JWT configuration. The caller controls cancellation through ctx.
-func AppInit(ctx context.Context) (*App, error) {
+func Init(ctx context.Context) (*App, error) {
 	if ctx == nil {
 		return nil, errors.New("app: context is required")
 	}
