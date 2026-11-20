@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.10 (2026-11-20)
+
+- refactor(app): rename AppInit to Init for clarity ([32ac4f5](https://github.com/naushadnizarali/dev-modules/commit/32ac4f5332d3792ad5f21774f13b3ecb2264fdaf))
+
 ## v1.0.9 (2026-11-17)
 
 - feat(config): add log level configuration for database ([e535115](https://github.com/naushadnizarali/dev-modules/commit/e535115e5a55a49b33af7a6784001c0ed754bca7))
